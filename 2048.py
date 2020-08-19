@@ -12,15 +12,17 @@ YELLOW = (250, 248, 239)
 BROWN = (187, 173, 161)
 DBROWN = (119, 110, 102)
 LBROWN = (214, 205, 196)
-ARROW = (119, 84, 71)
-START = (245, 131,96)
+ARROWDARK = (119, 84, 71)
+ARROWLIGHT = (219, 184, 171)
+STARTDARK = (245, 131, 96)
+STARTLIGHT = (255, 181, 146)
+HSCOREDARK = (142, 122, 103)
+HSCORELIGHT = (192, 172, 153)
+WHITE = (255, 255, 255)
 
 
-gameLogo = pygame.image.load(os.path.join('Images', '2048_logo.png'))
 tiles = [pygame.image.load(os.path.join('Images', 'Tiny.png')), pygame.image.load(os.path.join('Images', 'Classic.png')), pygame.image.load(os.path.join('Images', 'Big.png')), pygame.image.load(os.path.join('Images', 'Bigger.png')), pygame.image.load(os.path.join('Images', 'Huge.png'))]
-buttons = [pygame.image.load(os.path.join('Images', 'Left.png')), pygame.image.load(os.path.join('Images', 'Right.png'))]
-startGame = pygame.image.load(os.path.join('Images', 'startgame.png'))
-hScore = pygame.image.load(os.path.join('Images', 'highscore.png'))
+
 
 
 class Game(object):
@@ -111,34 +113,63 @@ class Game(object):
     """
     def homeScreen(self):
         titleFont = pygame.font.SysFont('comicsansms', 40, 0, 0)
+        description = [titleFont.render('Tiny (3x3)', 1, BROWN), titleFont.render('Classic (4x4)', 1, BROWN), titleFont.render('Big (5x5)', 1, BROWN), titleFont.render('Bigger (6x6)', 1, BROWN), titleFont.render('Huge (8x8)', 1, BROWN)]
         running = True
-        tile = tiles[0]
+        i = 0
         while running:
             SCREEN.fill(YELLOW)
-            SCREEN.blit(tiles[0], (int(WIN / 2 - tile.get_width() / 2), int(WIN / 16)))
-            # SCREEN.blit(buttons[0], (int(WIN / 2 - tile.get_width() / 2), int(WIN / 1.5)))
-            # SCREEN.blit(buttons[1], (int(WIN / 2 + tile.get_width() / 2 - buttons[1].get_width()), int(WIN / 1.5)))
-            pygame.draw.polygon(SCREEN, ARROW, ((int(WIN / 2 - tile.get_width() / 2 + 40), int(WIN / 1.5)), (int(WIN / 2 - tile.get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 - tile.get_width() / 2 + 40), int(WIN / 1.5) + 60)))
-            pygame.draw.polygon(SCREEN, ARROW, ((int(WIN / 2 + tile.get_width() / 2 - 40), int(WIN / 1.5)), (int(WIN / 2 + tile.get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 + tile.get_width() / 2 - 40), int(WIN / 1.5) + 60)))
-            titleLabel = titleFont.render('Tiny (3x3)', 1, BROWN)
+            SCREEN.blit(tiles[i], (int(WIN / 2 - tiles[i].get_width() / 2), int(WIN / 16)))
+            pygame.draw.polygon(SCREEN, ARROWDARK, ((int(WIN / 2 - tiles[i].get_width() / 2 + 40), int(WIN / 1.5)), (int(WIN / 2 - tiles[i].get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 - tiles[i].get_width() / 2 + 40), int(WIN / 1.5) + 60)))
+            pygame.draw.polygon(SCREEN, ARROWDARK, ((int(WIN / 2 + tiles[i].get_width() / 2 - 40), int(WIN / 1.5)), (int(WIN / 2 + tiles[i].get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 + tiles[i].get_width() / 2 - 40), int(WIN / 1.5) + 60)))
+            pygame.draw.rect(SCREEN, STARTDARK, (int(WIN / 2 - 150), int(WIN / 1.25), 300, 60))
+            pygame.draw.rect(SCREEN, HSCOREDARK, (int(WIN / 2 - 150), int(WIN / 1.12), 300, 60))
+            # titleLabel = titleFont.render('Tiny (3x3)', 1, BROWN)
+            titleLabel = description[i]
+            startLabel = titleFont.render('Start Game', 1, WHITE)
+            hscoreLabel = titleFont.render('High Scores', 1, WHITE)
             SCREEN.blit(titleLabel, (int(WIN / 2 - titleLabel.get_width() / 2), int(WIN / 1.5)))
-            SCREEN.blit(startGame, (int(WIN / 2 - startGame.get_width() / 2), int(WIN / 1.25)))
-            SCREEN.blit(hScore, (int(WIN / 2 - hScore.get_width() / 2), int(WIN / 1.12)))
-            # pygame.draw.line(SCREEN, ARROW, (10, 10), (40,30), 15)
-            # pygame.draw.line(SCREEN, ARROW, (40,30), (10, 60), 15)
+            SCREEN.blit(startLabel, (int(WIN / 2 - startLabel.get_width() / 2), int(WIN / 1.25)))
+            SCREEN.blit(hscoreLabel, (int(WIN / 2 - hscoreLabel.get_width() / 2), int(WIN / 1.12)))
+            
+            mouse = pygame.mouse.get_pos()
+            if int(WIN / 2 - tiles[i].get_width() / 2) <= mouse[0] <= int(WIN / 2 - tiles[i].get_width() / 2 + 40) and int(WIN / 1.5) <= mouse[1] <= int(WIN / 1.5) + 60:
+                pygame.draw.polygon(SCREEN, ARROWLIGHT, ((int(WIN / 2 - tiles[i].get_width() / 2 + 40), int(WIN / 1.5)), (int(WIN / 2 - tiles[i].get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 - tiles[i].get_width() / 2 + 40), int(WIN / 1.5) + 60)))
+            elif int(WIN / 2 + tiles[i].get_width() / 2 - 40) <= mouse[0] <= int(WIN / 2 + tiles[i].get_width() / 2) and int(WIN / 1.5) <= mouse[1] <= int(WIN / 1.5) + 60:
+                pygame.draw.polygon(SCREEN, ARROWLIGHT, ((int(WIN / 2 + tiles[i].get_width() / 2 - 40), int(WIN / 1.5)), (int(WIN / 2 + tiles[i].get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 + tiles[i].get_width() / 2 - 40), int(WIN / 1.5) + 60)))
+            elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.25) <= mouse[1] <= int(WIN / 1.25) + 60:
+                pygame.draw.rect(SCREEN, STARTLIGHT, (int(WIN / 2 - 150), int(WIN / 1.25), 300, 60))
+                SCREEN.blit(startLabel, (int(WIN / 2 - startLabel.get_width() / 2), int(WIN / 1.25)))
+            elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.12) <= mouse[1] <= int(WIN / 1.12) + 60:
+                pygame.draw.rect(SCREEN, HSCORELIGHT, (int(WIN / 2 - 150), int(WIN / 1.12), 300, 60))
+                SCREEN.blit(hscoreLabel, (int(WIN / 2 - hscoreLabel.get_width() / 2), int(WIN / 1.12)))
+
 
             pygame.display.update()
             keys = pygame.key.get_pressed()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
             if keys[pygame.K_ESCAPE]:
                 running = False
             if keys[pygame.K_s]:
                 self.gameScreen()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if int(WIN / 2 - tiles[i].get_width() / 2) <= mouse[0] <= int(WIN / 2 - tiles[i].get_width() / 2 + 40) and int(WIN / 1.5) <= mouse[1] <= int(WIN / 1.5) + 60:
+                        i -= 1
+                        if i == -5:
+                            i = 0
+                    elif int(WIN / 2 + tiles[i].get_width() / 2 - 40) <= mouse[0] <= int(WIN / 2 + tiles[i].get_width() / 2) and int(WIN / 1.5) <= mouse[1] <= int(WIN / 1.5) + 60:
+                        i += 1
+                        if i == 5:
+                            i = 0
+                    elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.25) <= mouse[1] <= int(WIN / 1.25) + 60:
+                        self.gameScreen()
+                    elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.12) <= mouse[1] <= int(WIN / 1.12) + 60:
+                        self.hscoreScreen
+                        
 
     def mainLoop(self):
-        # self.makeGrid()
+        self.makeGrid()
         self.homeScreen()
         # self.gameScreen()
         # while not self.done:
