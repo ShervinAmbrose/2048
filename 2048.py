@@ -20,9 +20,20 @@ HSCOREDARK = (142, 122, 103)
 HSCORELIGHT = (192, 172, 153)
 WHITE = (255, 255, 255)
 
-NUMBERS = [(238, 228, 219), (237, 224, 201), (214, 176, 125), (243, 149, 104), (244, 124, 99), (244, 95, 67), (244, 70, 45), (244, 50, 25), (244, 30, 5), (205, 0, 205), (179, 0, 179), (154, 0, 154), (128, 0, 128), (103, 0, 103), (77, 0, 77), (0, 102, 205), (0, 90, 179), (0, 77, 154), (0, 64, 128), (0, 51, 103)]
+NUMBERS = {'2': (238, 228, 219), '4': (237, 224, 201), '8': (214, 176, 125), '16': (243, 149, 104), '32': (244, 124, 99), '64': (244, 95, 67), '128': (244, 70, 45), '256': (244, 50, 25), '512': (244, 30, 5), '1024': (205, 0, 205), '2048': (179, 0, 179), '4096': (154, 0, 154), '8192': (128, 0, 128), '16384': (103, 0, 103), '32768': (77, 0, 77), '65536': (0, 102, 205), '131072': (0, 90, 179), '262144': (0, 77, 154), '524288': (0, 64, 128), '1048576': (0, 51, 103)}
 
 tiles = [pygame.image.load(os.path.join('Images', 'Tiny.png')), pygame.image.load(os.path.join('Images', 'Classic.png')), pygame.image.load(os.path.join('Images', 'Big.png')), pygame.image.load(os.path.join('Images', 'Bigger.png')), pygame.image.load(os.path.join('Images', 'Huge.png'))]
+
+options = [2, 4]
+probability = [0.9, 0.1]
+
+""" 
+TODO: 
+score keeping
+highscore
+undo 
+restart
+"""
 
 class Game(object):
     def __init__(self):
@@ -31,69 +42,124 @@ class Game(object):
         self.tempColumn = 0
         self.tempRow = 0
         self.numGrid = []
-        self.choice = 1
+        self.choice = 2
+        self.randx = 0
+        self.randy = 0
+        self.tile = [3, 4, 5, 6, 8]
+        self.move = False
+        self.coord = []
 
     def makeGrid(self):
-        tile = [3, 4, 5, 6, 8]
         border = 15
         row = 130 + border
-        self.tempColumn = 720 - ((tile[self.choice] + 1) * border)
-        self.tempColumn = round(self.tempColumn / tile[self.choice])
-        self.tempRow = 630 - ((tile[self.choice] + 1) * border)
-        self.tempRow = round(self.tempRow / tile[self.choice])
-        for i in range(tile[self.choice]):
+        self.tempColumn = 720 - ((self.tile[self.choice] + 1) * border)
+        self.tempColumn = round(self.tempColumn / self.tile[self.choice])
+        self.tempRow = 630 - ((self.tile[self.choice] + 1) * border)
+        self.tempRow = round(self.tempRow / self.tile[self.choice])
+        for i in range(self.tile[self.choice]):
             column = 40 + border
             self.numGrid.append([])
             self.grid.append([])
-            for j in range(tile[self.choice]):
+            for j in range(self.tile[self.choice]):
                 self.numGrid[i].append(0)
                 self.grid[i].append((row, column))
                 column = column + self.tempColumn + border
             row = row + self.tempRow + border
 
     def drawGrid(self):
-        tile = [3, 4, 5, 6, 8]
-        for i in range(tile[self.choice]):
-            for j in range(tile[self.choice]):
+        for i in range(self.tile[self.choice]):
+            for j in range(self.tile[self.choice]):
                 # self.roundedRect(LBROWN, self.grid[i][j][1]+20, self.grid[i][j][0]+20, 213, 170, 10)
                 pygame.draw.rect(SCREEN, LBROWN, (self.grid[i][j][1], self.grid[i][j][0], self.tempColumn, self.tempRow))
                 # pygame.display.update()
 
     def drawNum(self):
-        tile = [3, 4, 5, 6, 8]
-        numFont = pygame.font.SysFont('comicsansms', 50, 1, 0)
-        for i in range(tile[self.choice]):
-            for j in range(tile[self.choice]):
+        for i in range(self.tile[self.choice]):
+            for j in range(self.tile[self.choice]):
                 if self.numGrid[i][j] != 0:
-                    pygame.draw.rect(SCREEN, NUMBERS[0], (self.grid[i][j][1], self.grid[i][j][0], self.tempColumn, self.tempRow))
-                    numLabel = numFont.render(str(self.numGrid[i][j]), 1, DBROWN)
+                    pygame.draw.rect(SCREEN, NUMBERS[str(self.numGrid[i][j])], (self.grid[i][j][1], self.grid[i][j][0], self.tempColumn, self.tempRow))
+                    if self.numGrid[i][j] == 2 or self.numGrid[i][j] == 4:
+                        fontSize = int(0.7 * self.tempColumn)
+                        numFont = pygame.font.SysFont('comicsansms', fontSize, 1, 0)
+                        numLabel = numFont.render(str(self.numGrid[i][j]), 1, DBROWN)
+                    elif 7 < self.numGrid[i][j] < 515:
+                        fontSize = int(0.5 * self.tempColumn)
+                        numFont = pygame.font.SysFont('comicsansms', fontSize, 1, 0)
+                        numLabel = numFont.render(str(self.numGrid[i][j]), 1, WHITE)
+                    elif 1000 < self.numGrid[i][j] < 9000:
+                        fontSize = int(0.4 * self.tempColumn)
+                        numFont = pygame.font.SysFont('comicsansms', fontSize, 1, 0)
+                        numLabel = numFont.render(str(self.numGrid[i][j]), 1, WHITE)
+                    elif 10000 < self.numGrid[i][j] < 65540:
+                        fontSize = int(0.325 * self.tempColumn)
+                        numFont = pygame.font.SysFont('comicsansms', fontSize, 1, 0)
+                        numLabel = numFont.render(str(self.numGrid[i][j]), 1, WHITE)
+                    elif 100000 < self.numGrid[i][j] < 524290:
+                        fontSize = int(0.27 * self.tempColumn)
+                        numFont = pygame.font.SysFont('comicsansms', fontSize, 1, 0)
+                        numLabel = numFont.render(str(self.numGrid[i][j]), 1, WHITE)
+                    else:
+                        fontSize = int(0.235 * self.tempColumn)
+                        numFont = pygame.font.SysFont('comicsansms', fontSize, 1, 0)
+                        numLabel = numFont.render(str(self.numGrid[i][j]), 1, WHITE)
+
                     SCREEN.blit(numLabel, ((self.grid[i][j][1] + (self.tempColumn // 2)) - numLabel.get_width() // 2, (self.grid[i][j][0] + self.tempRow // 2) - numLabel.get_height() // 2))
         pygame.display.update()
 
     def moveDown(self):
-        for i in range(len(self.numGrid) - 2, -1, -1):
-            for j in range(len(self.numGrid) - 1, -1, -1):
+        for i in range(self.tile[self.choice] - 2, -1, -1):
+            for j in range(self.tile[self.choice] - 1, -1, -1):
+                k = i
                 if self.numGrid[i][j] != 0:
-                    k = i
-                    for k in range(k, 3):
-                        if self.numGrid[k][j] != self.numGrid[k + 1][j] and self.numGrid[k + 1][j] == 0:
-                            self.numGrid[k + 1][j] = self.numGrid[k][j]
-                            self.numGrid[k][j] = 0
-                        elif self.numGrid[k][j] == self.numGrid[k + 1][j] and self.numGrid[k][j] != 0:
-                            self.numGrid[k + 1][j] = self.numGrid[k + 1][j] * 2
-                            self.numGrid[k][j] = 0
+                    for l in range(k, self.tile[self.choice] - 1):
+                        if self.numGrid[l + 1][j] == 0 and self.numGrid[l][j] != 0:
+                            self.numGrid[l + 1][j] = self.numGrid[l][j]
+                            self.numGrid[l][j] = 0
+                            self.move = True
+                        else:
                             break
-        self.drawNum()
-                            
+
+        for i in range(self.tile[self.choice] - 1, 0, -1):
+            for j in range(self.tile[self.choice] - 1, -1, -1):
+                if self.numGrid[i][j] == self.numGrid[i - 1][j] and self.numGrid[i][j] != 0:
+                    self.numGrid[i][j] *= 2
+                    self.numGrid[i - 1][j] = 0
+                    self.move = True
+
+        for i in range(self.tile[self.choice] - 2, -1, -1):
+            for j in range(self.tile[self.choice] - 1, -1, -1):
+                k = i
+                if self.numGrid[i][j] != 0:
+                    for l in range(k, self.tile[self.choice] - 1):
+                        if self.numGrid[l + 1][j] == 0 and self.numGrid[l][j] != 0:
+                            self.numGrid[l + 1][j] = self.numGrid[l][j]
+                            self.numGrid[l][j] = 0
+                        else:
+                            break
+
+    def moveUp(self):
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+        self.moveDown()
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+
+    def moveRight(self):
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+        self.moveDown()
+        self.numGrid = [list(r) for r in zip(*self.numGrid)][::-1]
+
+    def moveLeft(self):
+        self.numGrid = [list(r) for r in zip(*self.numGrid)][::-1]
+        self.moveDown()
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+
     def randomTile(self):
-        tile = [3, 4, 5, 6, 8]
-        # i = j = None
-        # tempi = i
-        i = random.randrange(tile[self.choice])
-        # tempj = j
-        j = random.randrange(tile[self.choice])
-        if self.numGrid[i][j] == 0 and i != tempi and j != tempj:
-            self.numGrid[i][j] = 2
+        self.coord.append((self.randx, self.randy))
+        self.randx = random.randrange(self.tile[self.choice])
+        self.randy = random.randrange(self.tile[self.choice])
+        if self.numGrid[self.randx][self.randy] < 1 and ((self.randx, self.randy) not in self.coord):
+            self.numGrid[self.randx][self.randy] = random.choices(options, weights=(0.9, 0.1), k=1)[0]
         else:
             self.randomTile()
 
@@ -102,6 +168,7 @@ class Game(object):
         scoreFont = pygame.font.SysFont('comicsansms', 18, 1, 0)
         numFont = pygame.font.SysFont('comicsansms', 50, 1, 0)
         self.randomTile()
+        self.coord = []
         running = True
         while running:
             # displays 2048 in top left corner
@@ -151,10 +218,6 @@ class Game(object):
             
             self.drawNum()
 
-
-            # pygame.draw.rect(SCREEN, NUMBERS[0], (self.grid[0][0][1], self.grid[0][0][0], self.tempColumn, self.tempRow))
-            # numLabel = numFont.render('2', 1, DBROWN)
-            # SCREEN.blit(numLabel, ((self.grid[i][j][1] + (self.tempColumn // 2)) - numLabel.get_width() // 2, (self.grid[i][j][0] + self.tempRow // 2) - numLabel.get_height() // 2))
             pygame.display.update()
 
             keys = pygame.key.get_pressed()
@@ -176,14 +239,55 @@ class Game(object):
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
                         self.moveUp()
+                        if self.move:
+                            self.randomTile()
+                            self.move = False
+                            self.coord = []
+                        # print(self.numGrid[0])
+                        # print(self.numGrid[1])
+                        # print(self.numGrid[2])
+                        # print(self.numGrid[3])
+                        # print('')
+                        self.drawNum()
                     elif event.key == pygame.K_DOWN:
                         self.moveDown()
-                        self.randomTile()
+                        if self.move:
+                            self.randomTile()
+                            self.move = False
+                            self.coord = []
+                        # print(self.numGrid[0])
+                        # print(self.numGrid[1])
+                        # print(self.numGrid[2])
+                        # print(self.numGrid[3])
+                        # print('')
+
                         self.drawNum()
                     elif event.key == pygame.K_LEFT:
                         self.moveLeft()
+                        if self.move:
+                            self.randomTile()
+                            self.move = False
+                            self.coord = []
+                        # print(self.numGrid[0])
+                        # print(self.numGrid[1])
+                        # print(self.numGrid[2])
+                        # print(self.numGrid[3])
+                        # print('')
+
+                        self.drawNum()
                     elif event.key == pygame.K_RIGHT:
                         self.moveRight()
+                        if self.move:
+                            self.randomTile()
+                            self.move = False
+                            self.coord = []
+                        # print(self.numGrid[0])
+                        # print(self.numGrid[1])
+                        # print(self.numGrid[2])
+                        # print(self.numGrid[3])
+                        # print('')
+
+                        self.drawNum()
 
     """
     This function displays all the images and text on the home screen
@@ -193,7 +297,7 @@ class Game(object):
         description = [titleFont.render('Tiny (3x3)', 1, BROWN), titleFont.render('Classic (4x4)', 1, BROWN), titleFont.render('Big (5x5)', 1, BROWN), titleFont.render('Bigger (6x6)', 1, BROWN), titleFont.render('Huge (8x8)', 1, BROWN)]
         running = True
         while running:
-            
+
             SCREEN.fill(YELLOW)
             SCREEN.blit(tiles[self.choice], (int(WIN / 2 - tiles[self.choice].get_width() / 2), int(WIN / 16)))
             pygame.draw.polygon(SCREEN, ARROWDARK, ((int(WIN / 2 - tiles[self.choice].get_width() / 2 + 40), int(WIN / 1.5)), (int(WIN / 2 - tiles[self.choice].get_width() / 2), int(WIN / 1.5) + 30), (int(WIN / 2 - tiles[self.choice].get_width() / 2 + 40), int(WIN / 1.5) + 60)))
@@ -250,6 +354,17 @@ class Game(object):
     def mainLoop(self):
         # self.homeScreen()
         self.makeGrid()
+        # self.numGrid = [[2,4,8,16,32,64],
+        #                 [128,256,512,1024,2048,4096],
+        #                 [8192,16384,32768,65536,131072,262144],
+        #                 [524288,1048576,0,0,0,0],
+        #                 [0,0,0,0,0,0],
+        #                 [0,0,0,0,0,0]]
+        # self.numGrid = [[2,4,8,16,32],
+        #                 [64,128,256,512,1024],
+        #                 [2048,4096,8192,16384,32768],
+        #                 [65536,131072,262144,524288,1048576],
+        #                 [0,0,0,0,0]]
         self.gameScreen()
         # while not self.done:
         #     self.callEvent()
