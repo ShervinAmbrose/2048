@@ -2,6 +2,7 @@ import pygame
 import sys
 import os
 import random
+import pickle
 WIN = 800
 ROWS = 50
 
@@ -24,16 +25,13 @@ NUMBERS = {'2': (238, 228, 219), '4': (237, 224, 201), '8': (214, 176, 125), '16
 
 tiles = [pygame.image.load(os.path.join('Images', 'Tiny.png')), pygame.image.load(os.path.join('Images', 'Classic.png')), pygame.image.load(os.path.join('Images', 'Big.png')), pygame.image.load(os.path.join('Images', 'Bigger.png')), pygame.image.load(os.path.join('Images', 'Huge.png'))]
 
-options = [2, 4]
-probability = [0.9, 0.1]
-
 """ 
 TODO: 
-score keeping
+score keeping: if quit,esc or home pressed retain the state of the numGrid and score.
 highscore
-undo 
 restart
 """
+
 
 class Game(object):
     def __init__(self):
@@ -42,12 +40,20 @@ class Game(object):
         self.tempColumn = 0
         self.tempRow = 0
         self.numGrid = []
-        self.choice = 2
+        self.choice = 1
         self.randx = 0
         self.randy = 0
         self.tile = [3, 4, 5, 6, 8]
         self.move = False
         self.coord = []
+        self.undoGrid = []
+        self.score = 0
+        self.prevScore = 0
+        self.saveList = []
+        # with open('savegame', 'rb') as f:
+        #     self.saveList = f
+        #     self.score = self.saveList[0]
+        #     self.numGrid = self.saveList[1]
 
     def makeGrid(self):
         border = 15
@@ -69,9 +75,7 @@ class Game(object):
     def drawGrid(self):
         for i in range(self.tile[self.choice]):
             for j in range(self.tile[self.choice]):
-                # self.roundedRect(LBROWN, self.grid[i][j][1]+20, self.grid[i][j][0]+20, 213, 170, 10)
                 pygame.draw.rect(SCREEN, LBROWN, (self.grid[i][j][1], self.grid[i][j][0], self.tempColumn, self.tempRow))
-                # pygame.display.update()
 
     def drawNum(self):
         for i in range(self.tile[self.choice]):
@@ -123,6 +127,7 @@ class Game(object):
             for j in range(self.tile[self.choice] - 1, -1, -1):
                 if self.numGrid[i][j] == self.numGrid[i - 1][j] and self.numGrid[i][j] != 0:
                     self.numGrid[i][j] *= 2
+                    self.score += self.numGrid[i][j]
                     self.numGrid[i - 1][j] = 0
                     self.move = True
 
@@ -136,6 +141,11 @@ class Game(object):
                             self.numGrid[l][j] = 0
                         else:
                             break
+
+    def moveBlock(self):
+        self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
+        self.numGrid = [list(r) for r in zip(*self.numGrid)][::-1]
+        self.moveDown()
 
     def moveUp(self):
         self.numGrid = [list(r) for r in zip(*self.numGrid[::-1])]
@@ -159,14 +169,18 @@ class Game(object):
         self.randx = random.randrange(self.tile[self.choice])
         self.randy = random.randrange(self.tile[self.choice])
         if self.numGrid[self.randx][self.randy] < 1 and ((self.randx, self.randy) not in self.coord):
-            self.numGrid[self.randx][self.randy] = random.choices(options, weights=(0.9, 0.1), k=1)[0]
+            self.numGrid[self.randx][self.randy] = random.choices([2, 4], weights=(0.9, 0.1), k=1)[0]
         else:
             self.randomTile()
+
+    def undo(self):
+        self.numGrid = self.undoGrid
+        self.score = self.prevScore
+        self.drawNum
 
     def gameScreen(self):
         titleFont = pygame.font.SysFont('comicsansms', 70, 1, 0)
         scoreFont = pygame.font.SysFont('comicsansms', 18, 1, 0)
-        numFont = pygame.font.SysFont('comicsansms', 50, 1, 0)
         self.randomTile()
         self.coord = []
         running = True
@@ -180,8 +194,8 @@ class Game(object):
             pygame.draw.rect(SCREEN, BROWN, (int(WIN / 2) + 15, 20, 158, 60))
             scoreLabel = scoreFont.render('SCORE', 1, WHITE)
             SCREEN.blit(scoreLabel, (int(WIN / 2) + 93 - scoreLabel.get_width() // 2, 20))
-            # scoreOnly = scoreFont.render('123456783', 1, WHITE)
-            # SCREEN.blit(scoreOnly, (int(WIN / 2) + 93 - scoreOnly.get_width() / 2, 50))
+            score = scoreFont.render(str(self.score), 1, WHITE)
+            SCREEN.blit(score, (int(WIN / 2) + 93 - score.get_width() // 2, 50))
 
             # displays High Score
             pygame.draw.rect(SCREEN, BROWN, (WIN - 40 - 15 - 156, 20, 158, 60))
@@ -215,7 +229,7 @@ class Game(object):
                 pygame.draw.rect(SCREEN, LBROWN, (603, 90, 128, 30))
                 restartLabel = scoreFont.render('RESTART', 1, WHITE)
                 SCREEN.blit(restartLabel, (667 - restartLabel.get_width() // 2, 92))
-            
+
             self.drawNum()
 
             pygame.display.update()
@@ -223,10 +237,14 @@ class Game(object):
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
                 running = False
-            
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    self.saveList = [self.score, self.numGrid]
+                    # FIXME:
+                    with open("savegame", "wb") as f:
+                        pickle.dump(self.saveList, f)
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -238,55 +256,43 @@ class Game(object):
                         self.restart()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
+                        self.undoGrid = self.numGrid
+                        self.prevScore = self.score
                         self.moveUp()
                         if self.move:
                             self.randomTile()
                             self.move = False
                             self.coord = []
-                        # print(self.numGrid[0])
-                        # print(self.numGrid[1])
-                        # print(self.numGrid[2])
-                        # print(self.numGrid[3])
-                        # print('')
                         self.drawNum()
+
                     elif event.key == pygame.K_DOWN:
-                        self.moveDown()
+                        self.undoGrid = self.numGrid
+                        self.prevScore = self.score
+                        self.moveBlock()
                         if self.move:
                             self.randomTile()
                             self.move = False
                             self.coord = []
-                        # print(self.numGrid[0])
-                        # print(self.numGrid[1])
-                        # print(self.numGrid[2])
-                        # print(self.numGrid[3])
-                        # print('')
-
                         self.drawNum()
+
                     elif event.key == pygame.K_LEFT:
+                        self.undoGrid = self.numGrid
+                        self.prevScore = self.score
                         self.moveLeft()
                         if self.move:
                             self.randomTile()
                             self.move = False
                             self.coord = []
-                        # print(self.numGrid[0])
-                        # print(self.numGrid[1])
-                        # print(self.numGrid[2])
-                        # print(self.numGrid[3])
-                        # print('')
-
                         self.drawNum()
+
                     elif event.key == pygame.K_RIGHT:
+                        self.undoGrid = self.numGrid
+                        self.prevScore = self.score
                         self.moveRight()
                         if self.move:
                             self.randomTile()
                             self.move = False
                             self.coord = []
-                        # print(self.numGrid[0])
-                        # print(self.numGrid[1])
-                        # print(self.numGrid[2])
-                        # print(self.numGrid[3])
-                        # print('')
-
                         self.drawNum()
 
     """
@@ -323,7 +329,7 @@ class Game(object):
             elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.12) <= mouse[1] <= int(WIN / 1.12) + 60:
                 pygame.draw.rect(SCREEN, HSCORELIGHT, (int(WIN / 2 - 150), int(WIN / 1.12), 300, 60))
                 SCREEN.blit(hscoreLabel, (int(WIN / 2 - hscoreLabel.get_width() / 2), int(WIN / 1.12)))
-            
+
 
             pygame.display.update()
             keys = pygame.key.get_pressed()
@@ -344,15 +350,15 @@ class Game(object):
                         if self.choice == 5:
                             self.choice = 0
                     elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.25) <= mouse[1] <= int(WIN / 1.25) + 60:
-                        self.makeGrid(self.choice)
-                        self.gameScreen(self.choice)
+                        self.makeGrid()
+                        self.gameScreen()
                         self.grid = []
-                        
+
                     elif int(WIN / 2 - 150) <= mouse[0] <= int(WIN / 2 - 150) + 300 and int(WIN / 1.12) <= mouse[1] <= int(WIN / 1.12) + 60:
                         self.hscoreScreen
 
     def mainLoop(self):
-        # self.homeScreen()
+        self.homeScreen()
         self.makeGrid()
         # self.numGrid = [[2,4,8,16,32,64],
         #                 [128,256,512,1024,2048,4096],
@@ -366,8 +372,9 @@ class Game(object):
         #                 [65536,131072,262144,524288,1048576],
         #                 [0,0,0,0,0]]
         self.gameScreen()
-        # while not self.done:
-        #     self.callEvent()
+        while not self.done:
+            self.callEvent()
+
 
 def main():
     pygame.init()
@@ -376,6 +383,7 @@ def main():
     call.mainLoop()
     pygame.quit()
     sys.exit()
+
 
 if __name__ == "__main__":
     main()
